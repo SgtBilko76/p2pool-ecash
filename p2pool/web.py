@@ -45,7 +45,7 @@ def _atomic_write(filename, data):
         os.remove(filename)
         os.rename(filename + '.new', filename)
 
-def get_web_root(wb, datadir_path, bitcoind_getinfo_var, stop_event=variable.Event(), static_dir=None):
+def get_web_root(wb, datadir_path, bitcoind_getinfo_var, stop_event=variable.Event(), static_dir=None, worker_port=None, p2p_port=None):
     node = wb.node
     start_time = time.time()
     
@@ -389,6 +389,8 @@ def get_web_root(wb, datadir_path, bitcoind_getinfo_var, stop_event=variable.Eve
         tx_explorer_url_prefix=node.net.PARENT.TX_EXPLORER_URL_PREFIX,
         sats_per_coin=getattr(node.net.PARENT, 'SATS_PER_COIN', 10**8), # amounts in the API are sats*1e-8
         share_period=node.net.SHARE_PERIOD,
+        worker_port=worker_port or node.net.WORKER_PORT, # stratum; differs from the page's port behind an HTTPS proxy
+        p2p_port=p2p_port or node.net.P2P_PORT,
     )))
     new_root.putChild('version', WebInterface(lambda: p2pool.__version__))
     
@@ -504,5 +506,8 @@ def get_web_root(wb, datadir_path, bitcoind_getinfo_var, stop_event=variable.Eve
     if static_dir is None:
         static_dir = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), 'web-static')
     web_root.putChild('static', static.File(static_dir))
+    for name in ['robots.txt', 'sitemap.xml']: # search engines only look for these at the site root
+        if os.path.exists(os.path.join(static_dir, name)):
+            web_root.putChild(name, static.File(os.path.join(static_dir, name)))
     
     return web_root

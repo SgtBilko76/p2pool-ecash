@@ -71,7 +71,8 @@
   };
   addEventListener('scroll', onScroll, { passive: true });
 
-  $('c-url').textContent = `stratum+tcp://${location.hostname}:${location.port || (location.protocol === 'https:' ? 443 : 80)}`;
+  const setStratumUrl = () => ($('c-url').textContent = `stratum+tcp://${location.hostname}:${info.worker_port || 9351}`);
+  setStratumUrl();
 
   // ---------- stats ----------
   let myAddress = '';
@@ -229,7 +230,10 @@
     ]);
     const [ci, gs, ls, cp, rb, fee] = settled.map((r) => (r.status === 'fulfilled' ? r.value : undefined));
     const failed = settled.filter((r) => r.status === 'rejected');
-    if (ci) info = ci;
+    if (ci) {
+      info = ci;
+      setStratumUrl();
+    }
     if (failed.length === settled.length) {
       setNodeStatus(false, 'Offline');
       renderAlerts(['Could not reach the P2Pool node API. Retrying…'], []);

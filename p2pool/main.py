@@ -294,7 +294,7 @@ def main(args, net, datadir_path, merged_urls, worker_endpoint):
         wb = work.WorkerBridge(node, my_address, args.donation_percentage,
                                merged_urls, args.worker_fee, args, pubkeys,
                                bitcoind, args.share_rate)
-        web_root = web.get_web_root(wb, datadir_path, bitcoind_getinfo_var, static_dir=args.web_static)
+        web_root = web.get_web_root(wb, datadir_path, bitcoind_getinfo_var, static_dir=args.web_static, worker_port=worker_endpoint[1], p2p_port=args.p2pool_port)
         caching_wb = worker_interface.CachingWorkerBridge(wb)
         worker_interface.WorkerInterface(caching_wb).attach_to(web_root, get_handler=lambda request: request.redirect('/static/'))
         web_serverfactory = server.Site(web_root)
