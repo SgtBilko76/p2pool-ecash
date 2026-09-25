@@ -1,0 +1,11 @@
+# Verified with PyPy 2.7 v7.3.20 (https://downloads.python.org/pypy/pypy2.7-v7.3.20-linux64.tar.bz2).
+# Install these first, in a separate step (Twisted's setup needs them before it runs):
+#   pypy -m pip install 'pip<21' 'setuptools<45' wheel typing 'incremental==17.5.0'
+zope.interface<5.5
+constantly==15.1.0
+automat<21
+hyperlink<21
+PyHamcrest<2
+attrs<22
+twisted==20.3.0
+mock==3.0.5 # tests only

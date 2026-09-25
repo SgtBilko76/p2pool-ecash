@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P2Pool eCash</title>
+  <meta name="description" content="Decentralized eCash (XEC) mining: live pool hashrate, PPLNS payouts, miners and blocks of this P2Pool node.">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <meta name="theme-color" content="#003399">
+  <link rel="stylesheet" href="assets/style.css">
+  <script src="assets/theme.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="./"><img src="favicon.svg" width="34" height="34" alt=""><span>P2Pool<span class="tld"> eCash</span><small>Decentralized XEC mining</small></span></a>
+      <nav class="nav">
+        <a href="#overview" aria-current="page">Overview</a>
+        <a href="#connect">Connect</a>
+        <a href="#payouts">Payouts</a>
+        <a href="#miners">Miners</a>
+        <a href="#blocks">Blocks</a>
+      </nav>
+      <div class="header-meta">
+        <span class="status"><span class="dot" id="node-dot"></span><span id="node-status">Connecting…</span></span>
+        <span class="upd" id="updated"></span>
+        <button class="theme-btn" id="theme-btn" title="Toggle dark mode" aria-label="Toggle dark mode">◐</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="intro" id="overview">
+      <h1>eCash P2Pool node</h1>
+      <p>A peer-to-peer mining pool with no operator holding your coins: every block pays miners directly in its coinbase, split by PPLNS over the shared share chain. The miner fund and staking reward that eCash requires are paid first.</p>
+    </section>
+
+    <div id="alerts"></div>
+
+    <div class="stats" id="stats">
+      <div class="stat hero"><div class="lbl">Pool hashrate</div><div class="val" id="s-pool">–</div><span class="sub" id="s-pool-sub">&nbsp;</span></div>
+      <div class="stat"><div class="lbl">Network hashrate</div><div class="val" id="s-net">–</div><span class="sub" id="s-net-sub">&nbsp;</span></div>
+      <div class="stat"><div class="lbl">Expected time to block</div><div class="val" id="s-ttb">–</div><span class="sub" id="s-ttb-sub">&nbsp;</span></div>
+      <div class="stat"><div class="lbl">Block reward to miners</div><div class="val" id="s-reward">–</div><span class="sub" id="s-reward-sub">&nbsp;</span><div class="split" id="s-split" hidden><i class="miners"></i><i class="other"></i></div></div>
+      <div class="stat"><div class="lbl">Share difficulty</div><div class="val" id="s-sdiff">–</div><span class="sub" id="s-sdiff-sub">&nbsp;</span></div>
+      <div class="stat"><div class="lbl">This node</div><div class="val" id="s-node">–</div><span class="sub" id="s-node-sub">&nbsp;</span></div>
+    </div>
+
+    <div class="section-head"><h2>Hashrate</h2></div>
+    <div class="card chart-card">
+      <div class="chart-head">
+        <h3 id="chart-title">Pool hashrate</h3>
+        <span class="sub" id="chart-sub"></span>
+        <span class="spacer"></span>
+        <div class="seg" id="chart-source" role="group" aria-label="Data source">
+          <button type="button" data-v="pool" aria-pressed="true">Pool</button>
+          <button type="button" data-v="local" aria-pressed="false">This node</button>
+        </div>
+        <div class="seg" id="chart-range" role="group" aria-label="Time range">
+          <button type="button" data-v="last_hour" aria-pressed="false">1H</button>
+          <button type="button" data-v="last_day" aria-pressed="true">24H</button>
+          <button type="button" data-v="last_week" aria-pressed="false">7D</button>
+          <button type="button" data-v="last_month" aria-pressed="false">30D</button>
+        </div>
+      </div>
+      <div class="chart" id="chart" role="img" aria-label="Hashrate over time"></div>
+      <details class="data"><summary>Show data table</summary><div class="table-scroll"><table><thead><tr><th>Time</th><th>Hashrate</th></tr></thead><tbody id="chart-table"></tbody></table></div></details>
+    </div>
+
+    <section id="connect">
+      <div class="section-head"><h2>Connect your miner</h2><span class="sub">Any SHA-256 ASIC with Stratum v1</span></div>
+      <div class="connect">
+        <div class="card">
+          <h3>Miner settings</h3>
+          <dl class="kv">
+            <dt>Pool URL</dt>
+            <dd><span class="stratum"><code id="c-url">stratum+tcp://…</code><button class="copy" data-copy="c-url" title="Copy" aria-label="Copy pool URL">⧉</button></span></dd>
+            <dt>Username</dt>
+            <dd><span class="stratum"><code>your eCash address</code></span> <span class="muted">e.g. <code class="addr">ecash:qq…</code></span></dd>
+            <dt>Worker</dt>
+            <dd class="muted">optional, append <code class="addr">.rig1</code></dd>
+            <dt>Password</dt>
+            <dd class="muted">anything, e.g. <code class="addr">x</code></dd>
+          </dl>
+        </div>
+        <div class="card">
+          <h3>How payouts work</h3>
+          <ul>
+            <li>Rewards go <b>straight to your address</b> in each block the pool finds. There is no balance to withdraw and no minimum payout.</li>
+            <li>Your share of a block is proportional to your work in the recent shares (PPLNS): up to <b>3 blocks' worth</b> of pool work, and never more than 3 days.</li>
+            <li>Coinbase coins can be spent after <b>100 confirmations</b> (about 17 hours).</li>
+            <li>Node fee: <b id="c-fee">–</b>. Fixed share difficulty: add <code>/DIFF</code> to the username, e.g. <code>ecash:qq…/500000</code>.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="payouts">
+      <div class="section-head">
+        <h2>Payouts if the pool finds the next block</h2>
+        <span class="sub" id="p-sub"></span>
+        <span class="spacer"></span>
+        <input type="search" id="p-search" placeholder="Find your eCash address" aria-label="Find your eCash address" size="34">
+      </div>
+      <div class="table-card">
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th class="rank">#</th><th class="l">Address</th><th>Share<span class="hide-sm"> of PPLNS window</span></th><th><span class="hide-sm">Expected </span>Payout</th></tr></thead>
+            <tbody id="p-body"><tr><td colspan="4" class="loading">Loading…</td></tr></tbody>
+          </table>
+        </div>
+        <div class="table-foot"><span id="p-foot"></span><span>Changes with every new share</span></div>
+      </div>
+    </section>
+
+    <section id="miners">
+      <div class="section-head"><h2>Miners on this node</h2><span class="sub">Hashrate over the last 10 minutes</span></div>
+      <div class="table-card">
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th class="l">Miner</th><th>Hashrate</th><th>Rejected</th><th class="hide-sm">Share difficulty</th></tr></thead>
+            <tbody id="m-body"><tr><td colspan="4" class="loading">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="blocks">
+      <div class="section-head"><h2>Blocks found</h2><span class="sub">Within the current share chain (last 3 days)</span></div>
+      <div class="table-card">
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th class="l">Height</th><th class="l">Found</th><th class="l">Block hash</th><th class="hide-sm">Share</th></tr></thead>
+            <tbody id="b-body"><tr><td colspan="4" class="loading">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <p class="note">
+      Pool and network figures are averaged over the last hour of shares and are estimates. The expected time to block assumes the current pool hashrate stays constant; actual block times vary widely.
+      Amounts are in XEC (1 XEC = 100 sats). <a href="classic.html">Classic P2Pool view</a> · <a href="graphs.html">Detailed graphs</a>
+    </p>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span>P2Pool eCash <span id="version"></span> · open source (GPL-3.0), based on jtoomim/p2pool</span>
+      <nav><a href="classic.html">Classic view</a><a href="graphs.html">Graphs</a><a href="https://e.cash/" rel="noopener">About eCash</a></nav>
+    </div>
+  </footer>
+
+  <script src="assets/app.js"></script>
+</body>
+</html>
