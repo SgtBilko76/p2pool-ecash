@@ -12,3 +12,6 @@ Makefile.local
 .coverage
 build/
 ltc_scrypt.so
+
+# public release zips, built by contrib/make-public-release.py
+/web-static/downloads/

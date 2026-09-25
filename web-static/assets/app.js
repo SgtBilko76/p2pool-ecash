@@ -57,32 +57,7 @@
     return res.json();
   }
 
-  // ---------- theme ----------
-  $('theme-btn').addEventListener('click', () => {
-    const root = document.documentElement;
-    const current = root.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-    const next = current === 'dark' ? 'light' : 'dark';
-    root.dataset.theme = next;
-    try {
-      localStorage.setItem('p2pool-theme', next);
-    } catch {}
-    drawChart();
-  });
-
-  // ---------- copy buttons ----------
-  document.addEventListener('click', async (e) => {
-    const btn = e.target.closest('.copy');
-    if (!btn) return;
-    try {
-      await navigator.clipboard.writeText($(btn.dataset.copy).textContent);
-      btn.textContent = '✓';
-      btn.classList.add('done');
-      setTimeout(() => {
-        btn.textContent = '⧉';
-        btn.classList.remove('done');
-      }, 1500);
-    } catch {}
-  });
+  addEventListener('themechange', () => drawChart());
 
   // ---------- nav highlight ----------
   const navLinks = [...document.querySelectorAll('.nav a[href^="#"]')];
@@ -96,7 +71,6 @@
   };
   addEventListener('scroll', onScroll, { passive: true });
 
-  if ($('year')) $('year').textContent = new Date().getFullYear();
   $('c-url').textContent = `stratum+tcp://${location.hostname}:${location.port || (location.protocol === 'https:' ? 443 : 80)}`;
 
   // ---------- stats ----------
