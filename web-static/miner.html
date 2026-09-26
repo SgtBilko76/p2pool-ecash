@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Miner status – eCash (XEC) P2Pool</title>
+  <meta name="description" content="Live status of a miner on this eCash P2Pool node: hashrate, workers, share of the PPLNS window and expected payout.">
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <meta name="theme-color" content="#003399">
+  <link rel="stylesheet" href="assets/style.css">
+  <script src="assets/theme.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="./"><img src="favicon.svg" width="34" height="34" alt=""><span>P2Pool<span class="tld"> eCash</span><small>Decentralized XEC mining</small></span></a>
+      <nav class="nav">
+        <a href="./#overview">Overview</a>
+        <a href="./#connect">Connect</a>
+        <a href="./#payouts">Payouts</a>
+        <a href="./#miners" aria-current="page">Miners</a>
+        <a href="./#blocks">Blocks</a>
+      </nav>
+      <div class="header-meta">
+        <span class="status"><span class="dot" id="node-dot"></span><span id="node-status">Connecting…</span></span>
+        <span class="upd" id="updated"></span>
+        <button class="theme-btn" id="theme-btn" title="Toggle dark mode" aria-label="Toggle dark mode">◐</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="intro">
+      <h1>Miner status</h1>
+      <form class="miner-find" id="find" role="search">
+        <input type="search" id="addr-input" placeholder="Enter your eCash address (ecash:q…)" aria-label="eCash address" autocomplete="off" spellcheck="false">
+        <button type="submit" class="btn">Show</button>
+      </form>
+      <p class="miner-addr" id="addr-line" hidden>
+        <code id="addr"></code>
+        <button class="copy" data-copy="addr" title="Copy address" aria-label="Copy address">⧉</button>
+        <a id="explorer" href="#" rel="noopener" hidden>View on block explorer ↗</a>
+      </p>
+    </section>
+
+    <div id="alerts"></div>
+
+    <div id="content" hidden>
+      <div class="stats">
+        <div class="stat hero"><div class="lbl">Hashrate</div><div class="val" id="s-rate">–</div><span class="sub" id="s-rate-sub">&nbsp;</span></div>
+        <div class="stat"><div class="lbl">Rejected</div><div class="val" id="s-rej">–</div><span class="sub">last 10 minutes</span></div>
+        <div class="stat"><div class="lbl">Share of PPLNS window</div><div class="val" id="s-share">–</div><span class="sub" id="s-share-sub">&nbsp;</span></div>
+        <div class="stat"><div class="lbl">Payout if the pool finds the next block</div><div class="val" id="s-payout">–</div><span class="sub" id="s-payout-sub">&nbsp;</span></div>
+        <div class="stat"><div class="lbl">Estimated per day</div><div class="val" id="s-day">–</div><span class="sub" id="s-day-sub">&nbsp;</span></div>
+        <div class="stat"><div class="lbl">Share difficulty</div><div class="val" id="s-diff">–</div><span class="sub">last share from this miner</span></div>
+      </div>
+
+      <div class="section-head"><h2>Hashrate</h2></div>
+      <div class="card chart-card">
+        <div class="chart-head">
+          <h3>Hashrate of this miner</h3>
+          <span class="sub" id="chart-sub"></span>
+          <span class="spacer"></span>
+          <div class="seg" id="chart-range" role="group" aria-label="Time range">
+            <button type="button" data-v="last_hour" aria-pressed="false">1h</button>
+            <button type="button" data-v="last_day" aria-pressed="true">24h</button>
+            <button type="button" data-v="last_week" aria-pressed="false">7d</button>
+            <button type="button" data-v="last_month" aria-pressed="false">30d</button>
+          </div>
+        </div>
+        <div class="chart" id="chart"><div class="msg">Loading…</div></div>
+      </div>
+
+      <section>
+        <div class="section-head"><h2>Workers</h2><span class="sub">Hashrate over the last 10 minutes</span></div>
+        <div class="table-card">
+          <div class="table-scroll">
+            <table>
+              <thead><tr><th class="l">Worker</th><th>Hashrate</th><th>Rejected</th></tr></thead>
+              <tbody id="w-body"><tr><td colspan="3" class="loading">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <p class="note">
+        Hashrate is measured from the shares this node receives from you and is only shown while you are connected to this node.
+        Payouts go directly to your address in every block the pool finds, split by your share of the PPLNS window; the estimate per day assumes the current pool hashrate and your current share stay constant.
+      </p>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span>eCash P2Pool <span id="version"></span> · open source (GPL-3.0), based on jtoomim/p2pool</span>
+      <nav><a href="./">Dashboard</a><a href="graphs.html">Graphs</a><a href="https://e.cash/" rel="noopener">About eCash</a></nav>
+    </div>
+  </footer>
+
+  <script src="assets/common.js"></script>
+  <script src="assets/lib.js"></script>
+  <script src="assets/miner.js"></script>
+</body>
+</html>

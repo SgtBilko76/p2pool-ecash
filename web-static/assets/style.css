@@ -253,6 +253,13 @@ code.inline { white-space: nowrap; font: 12px var(--mono); background: var(--sur
 .cta b { color: var(--text); }
 
 /* Notes / footer */
+/* Miner status page */
+.miner-find { display: flex; gap: 8px; margin: 10px 0 0; max-width: 620px; }
+.miner-find input { flex: 1; min-width: 0; font-family: var(--mono); font-size: 13px; }
+.miner-addr { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 10px 0 0; }
+.miner-addr code { font: 13px var(--mono); color: var(--text); overflow-wrap: anywhere; }
+.miner-addr a { font-size: 13px; margin-left: 8px; }
+
 .note { color: var(--muted); font-size: 12px; margin: 12px 2px 32px; }
 .site-footer { border-top: 1px solid var(--border); padding: 24px 0 40px; color: var(--muted); font-size: 13px; }
 .site-footer .wrap { display: flex; flex-wrap: wrap; gap: 12px 28px; justify-content: space-between; }
