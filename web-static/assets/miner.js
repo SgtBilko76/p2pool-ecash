@@ -7,7 +7,7 @@
   const $ = (id) => document.getElementById(id);
   const setText = (id, text) => ($(id).textContent = text);
 
-  let info = { symbol: 'XEC', sats_per_coin: 100, address_explorer_url_prefix: '' };
+  let info = { symbol: 'XEC', sats_per_coin: 100 };
   const coins = (v) => (v * 1e8) / info.sats_per_coin;
   const xec = (c) => `${num(c, Math.abs(c) >= 1000 ? 0 : 2)} ${info.symbol}`;
 
@@ -137,12 +137,6 @@
       const blocksPerDay = 86400 / secondsPerBlock;
       setText('s-day', `≈ ${xec(coins(value) * blocksPerDay)}`);
       setText('s-day-sub', blocksPerDay >= 1 ? `pool finds ≈ ${num(blocksPerDay, 1)} blocks per day` : `pool finds a block about every ${duration(secondsPerBlock)}`);
-    }
-
-    const explorer = $('explorer');
-    if (info.address_explorer_url_prefix) {
-      explorer.href = info.address_explorer_url_prefix + (mine ? mine[0] : address);
-      explorer.hidden = false;
     }
 
     renderAlerts(

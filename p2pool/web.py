@@ -91,11 +91,22 @@ def get_web_root(wb, datadir_path, bitcoind_getinfo_var, stop_event=variable.Eve
             if bitcoin_data.script2_to_address(script, node.net.PARENT) is not None
         ))
     
+    # Display-only pool rates. Consensus code (p2pool/data.py) keeps using the original share-based
+    # rates; these only change what the dashboard and the JSON API report:
+    #  - only shares from the last hour count, so shares from before a mining break don't stretch
+    #    the time span and hide the current hashrate after mining resumes;
+    #  - the window runs up to now (after a grace of two share periods), so the rate decays when
+    #    shares stop arriving, and after 15 share periods without a share the pool counts as idle.
+    def recent_lookbehind(max_lookbehind):
+        cutoff = time.time() - 3600
+        n = 0
+        for share in node.tracker.get_chain(node.best_share_var.value, max_lookbehind):
+            if share.timestamp < cutoff:
+                break
+            n += 1
+        return n
+
     def pool_rate_scale(lookbehind):
-        # Share-chain rates are measured up to the newest share. When nobody mines, no new shares
-        # arrive and that rate would stay frozen at its last value. For display, measure the
-        # window up to now instead (after a grace of two share periods), so the shown hashrate
-        # decays towards zero. Consensus code (p2pool/data.py) keeps using the original rates.
         best = node.tracker.items[node.best_share_var.value]
         far = node.tracker.items[node.tracker.get_nth_parent_hash(best.hash, lookbehind - 1)]
         idle = time.time() - best.timestamp
@@ -106,14 +117,29 @@ def get_web_root(wb, datadir_path, bitcoind_getinfo_var, stop_event=variable.Eve
             return 1
         return span / max(span, span + idle - 2*node.net.SHARE_PERIOD)
 
+    def display_nonstale_rate(max_lookbehind):
+        """(nonstale attempts per second, stale proportion) over the shares of the last hour"""
+        lookbehind = recent_lookbehind(max_lookbehind)
+        if lookbehind < 2:
+            return 0, 0
+        rate = p2pool_data.get_pool_attempts_per_second(node.tracker, node.best_share_var.value, lookbehind) * pool_rate_scale(lookbehind)
+        return rate, p2pool_data.get_average_stale_prop(node.tracker, node.best_share_var.value, lookbehind)
+
+    def display_stale_rates(max_lookbehind):
+        """{'good'|'orphan'|'doa': attempts per second} over the shares of the last hour"""
+        lookbehind = recent_lookbehind(max_lookbehind)
+        if lookbehind < 2:
+            return {}
+        scale = pool_rate_scale(lookbehind)
+        return dict((k, v*scale) for k, v in p2pool_data.get_stale_counts(node.tracker, node.best_share_var.value, lookbehind, rates=True).iteritems())
+
     def get_global_stats():
         # averaged over last hour
         if node.tracker.get_height(node.best_share_var.value) < 10:
             return None
         lookbehind = min(node.tracker.get_height(node.best_share_var.value), 3600//node.net.SHARE_PERIOD)
         
-        nonstale_hash_rate = p2pool_data.get_pool_attempts_per_second(node.tracker, node.best_share_var.value, lookbehind) * pool_rate_scale(lookbehind)
-        stale_prop = p2pool_data.get_average_stale_prop(node.tracker, node.best_share_var.value, lookbehind)
+        nonstale_hash_rate, stale_prop = display_nonstale_rate(lookbehind)
         diff = bitcoin_data.target_to_difficulty(wb.current_work.value['bits'].target)
 
         return dict(
@@ -229,7 +255,7 @@ def get_web_root(wb, datadir_path, bitcoind_getinfo_var, stop_event=variable.Eve
     
     def decent_height():
         return min(node.tracker.get_height(node.best_share_var.value), 720)
-    web_root.putChild('rate', WebInterface(lambda: p2pool_data.get_pool_attempts_per_second(node.tracker, node.best_share_var.value, decent_height())*pool_rate_scale(decent_height())/(1-p2pool_data.get_average_stale_prop(node.tracker, node.best_share_var.value, decent_height()))))
+    web_root.putChild('rate', WebInterface(lambda: (lambda rate, stale_prop: rate/(1 - stale_prop))(*display_nonstale_rate(decent_height()))))
     web_root.putChild('difficulty', WebInterface(lambda: bitcoin_data.target_to_difficulty(node.tracker.items[node.best_share_var.value].max_target)))
     web_root.putChild('users', WebInterface(get_users))
     web_root.putChild('user_stales', WebInterface(lambda:
@@ -265,7 +291,7 @@ def get_web_root(wb, datadir_path, bitcoind_getinfo_var, stop_event=variable.Eve
         share='%064x' % s.hash,
     ) for s in node.tracker.get_chain(node.best_share_var.value, min(node.tracker.get_height(node.best_share_var.value), node.net.CHAIN_LENGTH)) if s.pow_hash <= s.header['bits'].target]))
     web_root.putChild('uptime', WebInterface(lambda: time.time() - start_time))
-    web_root.putChild('stale_rates', WebInterface(lambda: dict((k, v*pool_rate_scale(decent_height())) for k, v in p2pool_data.get_stale_counts(node.tracker, node.best_share_var.value, decent_height(), rates=True).iteritems())))
+    web_root.putChild('stale_rates', WebInterface(lambda: display_stale_rates(decent_height())))
     
     new_root = resource.Resource()
     web_root.putChild('web', new_root)
@@ -295,7 +321,7 @@ def get_web_root(wb, datadir_path, bitcoind_getinfo_var, stop_event=variable.Eve
                     add['address'], 0)*1e-8
         stat_log.append(dict(
             time=time.time(),
-            pool_hash_rate=p2pool_data.get_pool_attempts_per_second(node.tracker, node.best_share_var.value, lookbehind)*pool_rate_scale(lookbehind)/(1-global_stale_prop),
+            pool_hash_rate=(lambda rate, stale_prop: rate/(1 - stale_prop))(*display_nonstale_rate(lookbehind)),
             pool_stale_prop=global_stale_prop,
             local_hash_rates=miner_hash_rates,
             local_dead_hash_rates=miner_dead_hash_rates,
@@ -483,8 +509,7 @@ def get_web_root(wb, datadir_path, bitcoind_getinfo_var, stop_event=variable.Eve
         lookbehind = min(node.net.CHAIN_LENGTH, 60*60//node.net.SHARE_PERIOD, node.tracker.get_height(node.best_share_var.value))
         t = time.time()
         
-        scale = pool_rate_scale(lookbehind)
-        pool_rates = dict((k, v*scale) for k, v in p2pool_data.get_stale_counts(node.tracker, node.best_share_var.value, lookbehind, rates=True).iteritems())
+        pool_rates = display_stale_rates(lookbehind)
         pool_total = sum(pool_rates.itervalues())
         hd.datastreams['pool_rates'].add_datum(t, pool_rates)
         
