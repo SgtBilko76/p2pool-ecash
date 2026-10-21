@@ -3,7 +3,7 @@
 
 (() => {
   const REFRESH_MS = 30000;
-  const { esc, hashrate, compact, num, pct, duration, ago } = P2P;
+  const { esc, hashrate, compact, num, pct, duration, ago, poolRate } = P2P;
   const $ = (id) => document.getElementById(id);
   const setText = (id, text) => ($(id).textContent = text);
 
@@ -132,8 +132,8 @@
     const blockValue = local && (local.block_value_miners ?? local.block_value);
     setText('s-payout-sub', blockValue ? `of ${num(coins(blockValue), 0)} ${info.symbol} to miners` : ' ');
 
-    if (global && local && global.pool_hash_rate && local.attempts_to_block) {
-      const secondsPerBlock = local.attempts_to_block / global.pool_hash_rate;
+    if (global && local && poolRate(global, local) && local.attempts_to_block) {
+      const secondsPerBlock = local.attempts_to_block / poolRate(global, local);
       const blocksPerDay = 86400 / secondsPerBlock;
       setText('s-day', `≈ ${xec(coins(value) * blocksPerDay)}`);
       setText('s-day-sub', blocksPerDay >= 1 ? `pool finds ≈ ${num(blocksPerDay, 1)} blocks per day` : `pool finds a block about every ${duration(secondsPerBlock)}`);

@@ -5,7 +5,7 @@
   const REFRESH_MS = 30000;
   const $ = (id) => document.getElementById(id);
 
-  const { esc, hashrate, compact, num, pct, duration, ago, short } = P2P;
+  const { esc, hashrate, compact, num, pct, duration, ago, short, poolRate } = P2P;
 
   // Amounts from the API are in sats * 1e-8 regardless of coin.
   let info = { symbol: 'XEC', sats_per_coin: 100, address_explorer_url_prefix: '', block_explorer_url_prefix: '' };
@@ -65,12 +65,13 @@
       ['s-pool-sub', 's-net-sub'].forEach((id) => setText(id, msg));
       return;
     }
-    setText('s-pool', hashrate(global.pool_hash_rate));
-    setText('s-pool-sub', `Stale ${pct(global.pool_stale_prop)} · last hour`);
+    const rate = poolRate(global, local);
+    setText('s-pool', hashrate(rate));
+    setText('s-pool-sub', rate !== global.pool_nonstale_hash_rate ? 'connected miners · last 10 min' : 'share chain · last hour');
     setText('s-net', hashrate(global.network_hashrate));
-    const poolShare = global.pool_hash_rate / global.network_hashrate;
+    const poolShare = rate / global.network_hashrate;
     setText('s-net-sub', `Pool share ${pct(poolShare, poolShare < 0.01 ? 3 : 2)} · difficulty ${compact(global.network_block_difficulty)}`);
-    const ttb = local.attempts_to_block / global.pool_hash_rate;
+    const ttb = local.attempts_to_block / rate;
     setText('s-ttb', duration(ttb));
     setText('s-ttb-sub', `≈ ${num(86400 / ttb, 2)} blocks per day`);
 
@@ -91,7 +92,7 @@
     }
 
     setText('s-sdiff', compact(global.min_difficulty));
-    setText('s-sdiff-sub', `One share ≈ ${duration(local.attempts_to_share / global.pool_hash_rate)} of pool work`);
+    setText('s-sdiff-sub', `One share ≈ ${duration(local.attempts_to_share / rate)} of pool work`);
 
     const peers = local.peers.incoming + local.peers.outgoing;
     setText('s-node', `${peers} peer${peers === 1 ? '' : 's'}`);

@@ -121,6 +121,15 @@ const P2P = (() => {
     });
   }
 
+  // Pool hashrate for display. global.pool_hash_rate is nonstale/(1 - stale_prop) and reads 2x while
+  // every share carries a stale_info flag (DOA backlog); the share-chain estimate is also noisy with
+  // few shares. With no peers this node is the whole pool, so use the miners' live rate (10 min).
+  function poolRate(global, local) {
+    const peers = local && local.peers ? local.peers.incoming + local.peers.outgoing : 0;
+    const miners = Object.values((local && local.miner_hash_rates) || {}).reduce((s, v) => s + v, 0);
+    if (!peers && miners > 0) return miners;
+    return (global && global.pool_nonstale_hash_rate) || 0;
+  }
 
-  return { esc, hashrate, compact, num, pct, duration, ago, short, drawHashrateChart };
+  return { esc, hashrate, compact, num, pct, duration, ago, short, drawHashrateChart, poolRate };
 })();
