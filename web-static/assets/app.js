@@ -240,9 +240,11 @@
     setText('chart-sub', RANGE_LABEL[chartState.range]);
     try {
       const data = await get(`/web/graph_data/${stream}/${chartState.range}`);
-      // [center time, value, bin width, default]; pool_rates values are {good, orphan, doa}
+      // [center time, value, bin width, default]; pool_rates values are {good, orphan, doa}.
+      // 'good' is all share-chain work (= pool_nonstale_hash_rate); orphan/doa only estimate stale
+      // work from the stale_info flags, which the DOA backlog sets on every share (good+doa = 2x).
       chartState.points = data
-        .map(([t, v]) => [t, v == null ? null : typeof v === 'object' ? Object.values(v).reduce((s, x) => s + x, 0) : v])
+        .map(([t, v]) => [t, v == null ? null : typeof v === 'object' ? v.good || 0 : v])
         .filter(([, v]) => v != null)
         .sort((a, b) => a[0] - b[0]);
     } catch {

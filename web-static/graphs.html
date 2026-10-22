@@ -474,7 +474,9 @@
                     {"url": "../web/graph_data/current_payout/last_" + lowerperiod, "color": "#0000FF", "label": "Current"}
                 ]);
                 d3.json("../web/graph_data/pool_rates/last_" + lowerperiod, function(data) {
-                    plot(d3.select('#pool'), 'H/s', 'H', data_to_lines(data), true);
+                    // Only 'good' (all share-chain work). orphan/doa are estimated from stale_info flags,
+                    // which the DOA backlog sets on every share, so stacking them doubles the rate.
+                    plot(d3.select('#pool'), 'H/s', 'H', data_to_lines(data).filter(function(line){ return line.label == "good" }), true);
                 });
                 d3.json("../web/graph_data/peers/last_" + lowerperiod, function(data) {
                     plot(d3.select('#peers'), 'Total', null, data_to_lines(data, function(line){ return line.label == "incoming" }), true);

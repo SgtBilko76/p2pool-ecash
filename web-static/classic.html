@@ -55,14 +55,16 @@
                 d3.select('#time_to_share').text(format_dt(time_to_share));
                 
                 d3.json('../global_stats', function(global_stats) {
-                    d3.select('#pool_rate').text(d3.format('.3s')(global_stats.pool_hash_rate) + 'H/s');
+                    // pool_hash_rate is nonstale/(1 - stale_prop) and reads 2x under the DOA backlog
+                    var pool_rate = global_stats.pool_nonstale_hash_rate;
+                    d3.select('#pool_rate').text(d3.format('.3s')(pool_rate) + 'H/s');
                     d3.select('#pool_stale').text(d3.format('.2p')(global_stats.pool_stale_prop));
                     d3.select('#difficulty').text(d3.format('.3r')(global_stats.min_difficulty));
                     
-                    var time_to_block = local_stats.attempts_to_block/global_stats.pool_hash_rate;
+                    var time_to_block = local_stats.attempts_to_block/pool_rate;
                     d3.select('#time_to_block').text(format_dt(time_to_block));
                     
-                    d3.select('#expected_payout_amount').text(d3.format('.3r')(local/global_stats.pool_hash_rate*local_stats.block_value*(1-local_stats.donation_proportion)));
+                    d3.select('#expected_payout_amount').text(d3.format('.3r')(local/pool_rate*local_stats.block_value*(1-local_stats.donation_proportion)));
                 });
             });
             
